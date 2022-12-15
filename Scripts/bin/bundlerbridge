@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Make sure to cd into the workspace directory
+# before running the bundle command
+
+cd $1 && "${@:3}"

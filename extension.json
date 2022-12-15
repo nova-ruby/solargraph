@@ -1,0 +1,286 @@
+{
+  "identifier": "com.tommasonegri.Solargraph",
+  "name": "Solargraph",
+  "organization": "Tommaso Negri",
+  "description": "A Ruby language server featuring code completion, intellisense, and inline documentation.",
+  "version": "1.0",
+  "categories": ["languages"],
+
+  "main": "main.js",
+
+  "activationEvents": [
+    "onLanguage:ruby",
+    "onWorkspaceContains:*.rb",
+    "onCommand:tommasonegri.solargraph.search",
+    "onCommand:tommasonegri.solargraph.restart",
+    "onCommand:tommasonegri.solargraph.config",
+    "onCommand:tommasonegri.solargraph.downloadCore",
+    "onCommand:tommasonegri.solargraph.buildGemDocs",
+    "onCommand:tommasonegri.solargraph.rebuildAllGemDocs"
+  ],
+
+  "entitlements": {
+    "process": true,
+    "filesystem": "readwrite"
+  },
+
+  "commands": {
+    "extensions": [
+      {
+        "title": "Search Ruby Documentation",
+        "command": "tommasonegri.solargraph.search"
+      },
+      {
+        "title": "Restart Solargraph",
+        "command": "tommasonegri.solargraph.restart"
+      },
+      {
+        "title": "Create a Solargraph config file",
+        "command": "tommasonegri.solargraph.config"
+      },
+      {
+        "title": "Check Solargraph gem version",
+        "command": "tommasonegri.solargraph.checkGemVersion"
+      },
+      {
+        "title": "Download current Ruby documentation",
+        "command": "tommasonegri.solargraph.downloadCore"
+      },
+      {
+        "title": "Build new gem documentation",
+        "command": "tommasonegri.solargraph.buildGemDocs"
+      },
+      {
+        "title": "Rebuild all gem documentation",
+        "command": "tommasonegri.solargraph.rebuildAllGemDocs"
+      },
+      {
+        "title": "Get environment info",
+        "command": "tommasonegri.solargraph.environment"
+      }
+    ],
+    "editor": [
+      {
+        "title": "Format",
+        "command": "tommasonegri.solargraph.format",
+        "when": "editorHasFocus && editorSyntax == 'ruby'"
+      },
+      {
+        "title": "Find references",
+        "command": "tommasonegri.solargraph.findReferences",
+        "when": "editorHasFocus && editorHasSelection && editorSyntax == 'ruby'"
+      }
+    ]
+  },
+
+  "config": [
+    {
+      "key": "tommasonegri.solargraph.commandPath",
+      "title": "Command Path",
+      "description": "Path to the solargraph command. Set this to an absolute path to select from multiple installed Ruby versions.",
+      "type": "path",
+      "default": "solargraph"
+    },
+    {
+      "key": "tommasonegri.solargraph.useBundler",
+      "title": "Use Bundler",
+      "description": "Use \"bundle exec\" to run solargraph (if this is true, the solargraph.commandPath is ignored).",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "tommasonegri.solargraph.bundlerPath",
+      "title": "Bundler Path",
+      "description": "Path to the bundle executable, defaults to \"bundle\". Needs to be an absolute path for the 'bundle' exec/shim.",
+      "type": "path",
+      "default": "bundle"
+    },
+    {
+      "key": "tommasonegri.solargraph.checkGemVersion",
+      "title": "Check Gem Version",
+      "description": "Automatically check if a new version of the Solargraph gem is available.",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "tommasonegri.solargraph.completion",
+      "title": "Completion",
+      "description": "Enable completion.",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "tommasonegri.solargraph.definitions",
+      "title": "Definitions",
+      "description": "Enable definitions (go to, etc.).",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "tommasonegri.solargraph.diagnostics",
+      "title": "Diagnostics",
+      "description": "Enable diagnostics.",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "tommasonegri.solargraph.formatting",
+      "title": "Formatting",
+      "description": "Enable document formatting and control if it should be done on save.",
+      "type": "enum",
+      "values": [ "Disabled", "Enabled", "Enabled (on save)" ],
+      "radio": false,
+      "default": "Disabled"
+    },
+    {
+      "key": "tommasonegri.solargraph.hover",
+      "title": "Hover",
+      "description": "Enable hover.",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "tommasonegri.solargraph.references",
+      "title": "References",
+      "description": "Enable finding references.",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "tommasonegri.solargraph.rename",
+      "title": "Rename",
+      "description": "Enable symbol renaming.",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "tommasonegri.solargraph.logLevel",
+      "title": "Log Level",
+      "description": "Level of debug info to log (\"warn\" is least and \"debug\" is most).",
+      "type": "enum",
+      "values": [ "warn", "info", "debug" ],
+      "radio": false,
+      "default": "warn"
+    },
+    {
+      "key": "tommasonegri.solargraph.internals.restoreDefaults",
+      "title": "Restore defaults",
+      "type": "command",
+      "command": "tommasonegri.solargraph.restoreSettings"
+    }
+  ],
+
+  "configWorkspace": [
+    {
+      "key": "tommasonegri.solargraph.commandPath",
+      "title": "Command Path",
+      "description": "Path to the solargraph command. Set this to an absolute path to select from multiple installed Ruby versions.",
+      "type": "path"
+    },
+    {
+      "key": "tommasonegri.solargraph.useBundler",
+      "title": "Use Bundler",
+      "description": "Use \"bundle exec\" to run solargraph (if this is true, the solargraph.commandPath is ignored).",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.bundlerPath",
+      "title": "Bundler Path",
+      "description": "Path to the bundle executable, defaults to \"bundle\". Needs to be an absolute path for the 'bundle' exec/shim.",
+      "type": "path"
+    },
+    {
+      "key": "tommasonegri.solargraph.checkGemVersion",
+      "title": "Check Gem Version",
+      "description": "Automatically check if a new version of the Solargraph gem is available.",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.completion",
+      "title": "Completion",
+      "description": "Enable completion.",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.definitions",
+      "title": "Definitions",
+      "description": "Enable definitions (go to, etc.).",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.diagnostics",
+      "title": "Diagnostics",
+      "description": "Enable diagnostics.",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.formatting",
+      "title": "Formatting",
+      "description": "Enable document formatting and control if it should be done on save.",
+      "type": "enum",
+      "values": [ "Disabled", "Enabled", "Enabled (on save)" ],
+      "radio": false
+    },
+    {
+      "key": "tommasonegri.solargraph.hover",
+      "title": "Hover",
+      "description": "Enable hover.",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.references",
+      "title": "References",
+      "description": "Enable finding references.",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.rename",
+      "title": "Rename",
+      "description": "Enable symbol renaming.",
+      "type": "boolean"
+    },
+    {
+      "key": "tommasonegri.solargraph.logLevel",
+      "title": "Log Level",
+      "description": "Level of debug info to log (\"warn\" is least and \"debug\" is most).",
+      "type": "enum",
+      "values": [ "warn", "info", "debug" ],
+      "radio": false
+    },
+    {
+      "key": "tommasonegri.solargraph.internals.restoreDefaults",
+      "title": "Restore defaults",
+      "type": "command",
+      "command": "tommasonegri.solargraph.restoreWorkspaceSettings"
+    }
+  ],
+
+  "sidebars": [
+    {
+      "id": "tommasonegri.solargraph.sidebar",
+      "name": "Solargraph",
+      "smallImage": "sidebar-small",
+      "smallSelectedImage": "sidebar-small-selected",
+      "largeImage": "sidebar-large",
+      "largeSelectedImage": "sidebar-large-selected",
+      "sections": [
+        {
+          "id": "tommasonegri.solargraph.sidebar.references",
+          "name": "References",
+          "allowMultiple": true,
+          "placeholderText": "Results from “Find Symbol”, “Find Reference” and “Go to Definition” will show here.",
+          "placeholderImage": "sidebar-large",
+          "headerCommands": [
+            {
+              "title": "Find symbol",
+              "image": "__builtin.refresh",
+              "tooltip": "Refresh notes",
+              "command": "tommasonegri.solargraph.commands.sidebar.notes.reload",
+              "when": "bridgetownDetected == null"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
