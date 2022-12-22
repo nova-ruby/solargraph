@@ -64,18 +64,6 @@ nova.subscriptions.add(
 	})
 )
 
-// Check gem version command
-nova.subscriptions.add(
-	nova.commands.register("tommasonegri.solargraph.checkGemVersion", () => {
-		if (nova.workspace.config.get("tommasonegri.solargraph.internals.server.error")) {
-			console.warn("Impossible to check gem version: server not running.")
-			return
-		}
-
-		langserver.languageClient.sendNotification("$/solargraph/checkGemVersion", { verbose: true })
-	})
-)
-
 // Generate configuration command
 nova.subscriptions.add(
 	nova.commands.register("tommasonegri.solargraph.config", async () => {
@@ -95,11 +83,21 @@ nova.subscriptions.add(
 	})
 )
 
-// EDITOR COMMANDS
+// Check gem version command
+nova.subscriptions.add(
+	nova.commands.register("tommasonegri.solargraph.checkGemVersion", () => {
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.server.error")) {
+			console.warn("Impossible to check gem version: server not running.")
+			return
+		}
+
+		langserver.languageClient.sendNotification("$/solargraph/checkGemVersion", { verbose: true })
+	})
+)
 
 // Internal format command
 nova.subscriptions.add(
-	nova.commands.register("tommasonegri.solargraph.editor._format", async (_, editor, options = {}) => {
+	nova.commands.register("tommasonegri.solargraph._format", async (_, editor, options = {}) => {
 		if (skipFormatOnSave) {
 			skipFormatOnSave = false
 			return
@@ -113,10 +111,61 @@ nova.subscriptions.add(
 	})
 )
 
+// Internal rename symbol command
+nova.subscriptions.add(
+	nova.commands.register("tommasonegri.solargraph._rename", async (_, editor) => {
+		const workspaceEdit = await langserver.customRequests.renameSymbol(editor)
+		const files         = Object.keys(workspaceEdit.changes)
+		const relativeFiles = files.map(file => {
+			const path = file.replace("file:/", "")
+			return `./${nova.workspace.relativizePath(path)}`
+		})
+		const changes       = Object.entries(workspaceEdit.changes)
+
+		console.log(files)
+
+		/** @type {boolean} */
+		const confirmation = await new Promise((resolve) => {
+			const message  = `Are you sure? The following files will be modified:\n\n${relativeFiles.join("\n")}`
+			const options  = { buttons: ["Confirm changes", "Cancel"] }
+			const callback = (action) => {
+				switch (action) {
+					case 0:
+						resolve(true)
+						break
+					case 1:
+						resolve(false)
+						break
+				}
+			}
+
+			nova.workspace.showActionPanel(message, options, callback)
+		})
+
+		if (confirmation) {
+			for ([uri, textEdits] of changes) {
+				console.log(textEdits)
+
+				const editor = await nova.workspace.openFile(uri)
+
+				if (!editor) return
+
+				textEdits.forEach(textEdit => {
+					solargraph.requests.helpers.applyTextEdit(editor, textEdit)
+				})
+
+				editor.save()
+			}
+		}
+	})
+)
+
+// EDITOR COMMANDS
+
 // Format command
 nova.subscriptions.add(
 	nova.commands.register("tommasonegri.solargraph.editor.format", (editor) => {
-		nova.commands.invoke("tommasonegri.solargraph.editor._format", editor)
+		nova.commands.invoke("tommasonegri.solargraph._format", editor)
 	})
 )
 
@@ -138,6 +187,13 @@ nova.subscriptions.add(
 		const references = await langserver.customRequests.findReferences(editor)
 
 		sidebar.references.display(symbol, references)
+	})
+)
+
+// Rename command
+nova.subscriptions.add(
+	nova.commands.register("tommasonegri.solargraph.editor.rename", (editor) => {
+		nova.commands.invoke("tommasonegri.solargraph._rename", editor)
 	})
 )
 

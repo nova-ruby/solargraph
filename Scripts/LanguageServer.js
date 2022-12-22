@@ -86,7 +86,7 @@ class LanguageServer {
 					if (!solargraph.SYNTAXES.includes(editor.document.syntax)) return
 
 					const didSaveHandler = editor.onDidSave(async (editor) => {
-						nova.commands.invoke("tommasonegri.solargraph.editor._format", editor, { verbose: false })
+						nova.commands.invoke("tommasonegri.solargraph._format", editor, { verbose: false })
 					})
 
 					const didDestroyHandler = editor.onDidDestroy(() => {
@@ -240,10 +240,9 @@ class CustomRequests {
 
 	/**
 	 * Send a find workspace symbol request to the server and return the response.
-	 * @param {symbol} symbol
 	 * @return {Promise<SymbolInformation[]>}
 	 */
-	findSymbols(symbol) {
+	findSymbols() {
 		if (!nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
 			console.warn("Impossible to find workspace symbols: server not enabled in the project.")
 			return []
@@ -274,7 +273,58 @@ class CustomRequests {
 			return []
 		}
 
-		return solargraph.requests.findSymbols(this.languageClient, symbol)
+		return solargraph.requests.findSymbols(this.languageClient)
+	}
+
+	/**
+	 * Send a rename workspace symbol request to the server and return the response.
+	 * @param {TextEditor} editor
+	 * @return {Promise<WorkspaceEdit>}
+	 */
+	async renameSymbol(editor) {
+		if (!nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
+			console.warn("Impossible to find workspace symbols: server not enabled in the project.")
+			return []
+		}
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.server.error")) {
+			console.warn("Impossible to find workspace symbols: server not running.")
+			return []
+		}
+
+		if (!configFor(solargraph.config.solargraph.get("rename"))) {
+			const message  = "Renaming symbols is disabled. You can enable it from the extension or project settings."
+			const options  = { buttons: ["OK", "Project settings", "Extension settings"] }
+			const callback = (action) => {
+				switch (action) {
+					case 0:
+						break
+					case 1:
+						nova.workspace.openConfig()
+						break
+					case 2:
+						nova.openConfig()
+						break
+				}
+			}
+
+			nova.workspace.showActionPanel(message, options, callback)
+
+			return []
+		}
+
+		/** @type {Promise<string | null>} */
+		const newName = await new Promise((resolve) => {
+			nova.workspace.showInputPalette("New name for symbol", {
+				placeholder: editor.selectedText,
+				value: editor.selectedText,
+			}, resolve)
+		})
+
+		if (!newName) return []
+
+		console.log(newName)
+
+		return solargraph.requests.renameSymbol(this.languageClient, editor, newName)
 	}
 
 	/** @param {LanguageClient} languageClient */
