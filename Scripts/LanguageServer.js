@@ -63,8 +63,7 @@ class LanguageServer {
 		try {
 			client.start()
 
-			nova.workspace.config.remove("tommasonegri.solargraph.internals.stopped")
-			nova.workspace.config.remove("tommasonegri.solargraph.internals.crashed")
+			nova.workspace.config.remove("tommasonegri.solargraph.internals.server.error")
 
 			nova.subscriptions.add(client)
 			this.languageClient = client
@@ -110,10 +109,8 @@ class LanguageServer {
 
 			// Check if the server stopped or crashed
 			client.onDidStop((error) => {
-				nova.workspace.config.set("tommasonegri.solargraph.internals.stopped", true)
-
 				if (error) {
-					nova.workspace.config.set("tommasonegri.solargraph.internals.crashed", true)
+					nova.workspace.config.set("tommasonegri.solargraph.internals.server.error", true)
 
 					console.error(error)
 
@@ -140,8 +137,7 @@ class LanguageServer {
 	deactivate() {
 		if (nova.inDevMode()) console.log("Deactivating Solargraph...")
 
-		nova.workspace.config.remove("tommasonegri.solargraph.internals.stopped")
-		nova.workspace.config.remove("tommasonegri.solargraph.internals.crashed")
+		nova.workspace.config.remove("tommasonegri.solargraph.internals.server.error")
 
 		if (this.languageClient) {
 			this.languageClient.stop()
@@ -174,7 +170,7 @@ class CustomRequests {
 			if (verbose) console.warn("Impossible to format the document: server not enabled in the project.")
 			return []
 		}
-		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.server.error")) {
 			if (verbose) console.warn("Impossible to format the document: server not running.")
 			return []
 		}
@@ -213,7 +209,7 @@ class CustomRequests {
 			console.warn("Impossible to find references: server not enabled in the project.")
 			return []
 		}
-		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.server.error")) {
 			console.warn("Impossible to find references: server not running.")
 			return []
 		}
@@ -252,7 +248,7 @@ class CustomRequests {
 			console.warn("Impossible to find workspace symbols: server not enabled in the project.")
 			return []
 		}
-		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.server.error")) {
 			console.warn("Impossible to find workspace symbols: server not running.")
 			return []
 		}

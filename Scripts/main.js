@@ -67,7 +67,7 @@ nova.subscriptions.add(
 // Check gem version command
 nova.subscriptions.add(
 	nova.commands.register("tommasonegri.solargraph.checkGemVersion", () => {
-		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.server.error")) {
 			console.warn("Impossible to check gem version: server not running.")
 			return
 		}

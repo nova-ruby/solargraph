@@ -33,7 +33,7 @@
 			{
 				"title": "Check Gem Version",
 				"command": "tommasonegri.solargraph.checkGemVersion",
-				"when": "tommasonegri.solargraph.internals.stopped != true && tommasonegri.solargraph.workspace.enabled != false"
+				"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false"
 			},
 			{ "separator": true },
 			{
@@ -54,18 +54,18 @@
 			{
 				"title": "Find References",
 				"command": "tommasonegri.solargraph.editor.findReferences",
-				"when": "tommasonegri.solargraph.internals.stopped != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorHasSelection && editorSyntax == 'ruby'"
+				"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorHasSelection && editorSyntax == 'ruby'"
 			},
 			{ "separator": true },
 			{
 				"title": "Format",
 				"command": "tommasonegri.solargraph.editor.format",
-				"when": "tommasonegri.solargraph.internals.stopped != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorSyntax == 'ruby'"
+				"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorSyntax == 'ruby'"
 			},
 			{
 				"title": "Save Without Formatting",
 				"command": "tommasonegri.solargraph.editor.saveWithoutFormatting",
-				"when": "tommasonegri.solargraph.internals.stopped != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorSyntax == 'ruby'"
+				"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorSyntax == 'ruby'"
 			}
 		]
 	},
@@ -374,7 +374,7 @@
 							"image": "__builtin.refresh",
 							"tooltip": "Refresh symbols",
 							"command": "tommasonegri.solargraph.sidebar.symbols.commands.refresh",
-							"when": "tommasonegri.solargraph.internals.stopped != true && tommasonegri.solargraph.workspace.enabled != false"
+							"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false"
 						}
 					]
 				}
