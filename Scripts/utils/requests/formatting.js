@@ -1,27 +1,21 @@
 const helpers = require("./helpers")
 
 /**
- * Request a formatting action and apply the response
+ * Send a formatting request to the server and return the response.
  * @param {LanguageClient} languageClient
  * @param {TextEditor} editor
+ * @return {Promise<TextEdits[]>}
  */
 module.exports = (languageClient, editor) => {
-  languageClient.sendRequest("textDocument/formatting", { textDocument: { uri: editor.document.uri } }).then(response => {
-    // RESPONSE
-    // [{
-    //   range: {
-    //     start: { line: Int, character: Int },
-    //     end: { line: Int, character: Int }
-    //   },
-    //   newText: String
-    // }]
+	const params = {
+		textDocument: {
+			uri: editor.document.uri
+		},
+		options: {
+			tabSize: editor.tabLength,
+			insertSpaces: editor.softTabs
+		}
+	}
 
-    response.forEach(formatting => {
-      editor.edit((edit) => {
-        const range = helpers.lspRangeToRange(editor.document, formatting.range)
-
-        edit.replace(range, formatting.newText)
-      })
-    })
-  })
+	return languageClient.sendRequest("textDocument/formatting", params)
 }

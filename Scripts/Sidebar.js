@@ -1,37 +1,14 @@
-const ReferencesView = require("./sidebar/ReferencesView")
+const SidebarReferences = require("./sidebar/References")
+const SidebarSymbols    = require("./sidebar/Symbols")
 
-class SolargraphSidebar {
-  constructor() {
-    /**
-     * @type {ReferencesView}
-     */
-    this.referencesView = null
+class Sidebar {
+	constructor() {
+		this.references = new SidebarReferences()
+		nova.subscriptions.add(this.references)
 
-    this.activate()
-  }
-
-  activate() {
-    if (this.referencesView) {
-      this.referencesView.deactivate()
-      nova.subscriptions.remove(this.referencesView)
-    }
-
-    this.referencesView = new ReferencesView()
-    nova.subscriptions.add(this.referencesView)
-  }
-
-  dispose() {}
-
-  /**
-   * Take LSP references and display them in a sidebar
-   * @param {String} symbol
-   * @param {Object[]} references
-   */
-  displaySymbolReferences(symbol, references) {
-    if (this.referencesView) {
-      this.referencesView.display(symbol, references)
-    }
-  }
+		this.symbols = new SidebarSymbols()
+		nova.subscriptions.add(this.symbols)
+	}
 }
 
-module.exports = SolargraphSidebar
+module.exports = Sidebar

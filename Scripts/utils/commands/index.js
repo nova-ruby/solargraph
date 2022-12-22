@@ -1,4 +1,4 @@
 module.exports = {
-  solargraph: require("./solargraph"),
-  helpers: require("./helpers")
+	solargraph: require("./solargraph"),
+	helpers: require("./helpers")
 }

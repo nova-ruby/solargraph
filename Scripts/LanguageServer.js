@@ -1,151 +1,290 @@
 const solargraph    = require("./utils/index")
 const { configFor } = require("./helpers")
 
-class SolargraphLanguageServer {
-  constructor() {
-    /**
-     * @type {LanguageClient}
-     */
-    this.languageClient = null
-    this.customRequests = new CustomRequests()
-  }
+class LanguageServer {
+	constructor() {
+		/** @type {LanguageClient} */
+		this.languageClient = null
 
-  async activate() {
-    if (nova.inDevMode()) console.log("Activating Solargraph...")
+		/** @type {CustomRequests} */
+		this.customRequests = new CustomRequests()
 
-    if (this.languageClient) {
-      this.languageClient.stop()
-      nova.subscriptions.remove(this.languageClient)
-    }
+		/** @type {Disposable[]} */
+		this.formatOnSaveEventHandlers = []
+	}
 
-    const path = solargraph.commands.helpers.solargraph.path(solargraph.config)
-    const args = solargraph.commands.helpers.solargraph.args(solargraph.config)
+	async activate() {
+		if (nova.inDevMode()) console.log("Activating Solargraph...")
 
-    const serverOptions = {
-      path: path,
-      args: [...args, "stdio"],
-      env: {
-        cwd: nova.workspace.path
-      },
-      type: "stdio"
-    }
+		if (this.languageClient) {
+			this.languageClient.stop()
+			nova.subscriptions.remove(this.languageClient)
 
-    const clientOptions = {
-      syntaxes: ["ruby"],
-      debug: false,
-      initializationOptions: {
-        transport: "stdio",
-        commandPath: configFor(solargraph.config.solargraph.get("commandPath")),
-        useBundler: configFor(solargraph.config.solargraph.get("useBundler")),
-        bundlerPath: configFor(solargraph.config.solargraph.get("bundlerPath")),
-        checkGemVersion: configFor(solargraph.config.solargraph.get("checkGemVersion")),
-        completion: configFor(solargraph.config.solargraph.get("completion")),
-        hover: configFor(solargraph.config.solargraph.get("hover")),
-        diagnostics: configFor(solargraph.config.solargraph.get("diagnostics")),
-        autoformat: false, // Solargraph doest not really support this request
-        formatting: configFor(solargraph.config.solargraph.get("formatting")) != "Disabled",
-        symbols: false, // Nova does not currently support this request
-        definitions: configFor(solargraph.config.solargraph.get("definitions")),
-        rename: configFor(solargraph.config.solargraph.get("rename")),
-        references: configFor(solargraph.config.solargraph.get("references")),
-        folding: false, // Nova does not currently support this request
-        logLevel: configFor(solargraph.config.solargraph.get("logLevel")),
+			this.formatOnSaveEventHandlers.forEach(handler => handler.dispose())
+		}
 
-        enablePages: true,
-        viewsPath: nova.path.join(nova.extension.path, "Scripts", "views")
-      }
-    }
+		const path = solargraph.commands.helpers.solargraph.path(solargraph.config)
+		const args = solargraph.commands.helpers.solargraph.args(solargraph.config)
 
-    const client = new LanguageClient("tommasonegri.solargraph", "Solargraph", serverOptions, clientOptions)
+		const serverOptions = {
+			path: path,
+			args: [...args, "stdio"],
+			type: "stdio"
+		}
 
-    try {
-      client.start()
+		const clientOptions = {
+			syntaxes: solargraph.SYNTAXES,
+			debug: false,
+			initializationOptions: {
+				transport: "stdio",
+				commandPath: configFor(solargraph.config.solargraph.get("commandPath")),
+				useBundler: configFor(solargraph.config.solargraph.get("useBundler")),
+				bundlerPath: configFor(solargraph.config.solargraph.get("bundlerPath")),
+				checkGemVersion: configFor(solargraph.config.solargraph.get("checkGemVersion")),
+				completion: configFor(solargraph.config.solargraph.get("completion")),
+				hover: configFor(solargraph.config.solargraph.get("hover")),
+				diagnostics: configFor(solargraph.config.solargraph.get("diagnostics")),
+				autoformat: false, // Solargraph doest not truly support this request
+				formatting: configFor(solargraph.config.solargraph.get("formatting")) != false,
+				symbols: configFor(solargraph.config.solargraph.get("symbols")),
+				definitions: configFor(solargraph.config.solargraph.get("definitions")),
+				rename: configFor(solargraph.config.solargraph.get("rename")),
+				references: configFor(solargraph.config.solargraph.get("references")),
+				folding: false, // Nova does not expose this api
+				logLevel: configFor(solargraph.config.solargraph.get("logLevel")),
 
-      nova.subscriptions.add(client)
-      this.languageClient = client
+				enablePages: false,
+				viewsPath: null
+			}
+		}
 
-      this.customRequests.setLanguageClient(client)
+		const client = new LanguageClient("tommasonegri.solargraph", "Solargraph", serverOptions, clientOptions)
 
-      // Check gem version at startup if specified
-      if (configFor(solargraph.config.solargraph.get("checkGemVersion"))) {
-        nova.commands.invoke("tommasonegri.solargraph.checkGemVersion")
-      }
+		try {
+			client.start()
 
-      // Format on save if specified
-      if (configFor(solargraph.config.solargraph.get("formatting")) == "Enabled (on save)") {
-        nova.workspace.activeTextEditor.onDidSave((editor) => {
-          this.customRequests.formatting(editor)
-        })
-      }
-    } catch (error) {
-      console.error(error.message)
-    }
-  }
+			nova.workspace.config.remove("tommasonegri.solargraph.internals.stopped")
+			nova.workspace.config.remove("tommasonegri.solargraph.internals.crashed")
 
-  deactivate() {
-    if (nova.inDevMode()) console.log("Deactivating Solargraph...")
+			nova.subscriptions.add(client)
+			this.languageClient = client
 
-    if (this.languageClient) {
-      this.languageClient.stop()
-      nova.subscriptions.remove(this.languageClient)
-      this.languageClient = null
-    }
-  }
+			this.customRequests.setLanguageClient(client)
 
-  /**
-   * Return a bool indicating if the languageClient is running
-   * @type {boolean}
-   */
-  get isRunning() {
-    return this.languageClient != null
-  }
+			// Respond to restart server notification
+			client.onNotification("$/solargraph/restartServer", () => {
+				nova.commands.invoke("tommasonegri.solargraph.restart")
+			})
+
+			// Check gem version at startup if specified
+			if (configFor(solargraph.config.solargraph.get("checkGemVersion"))) {
+				client.sendNotification('$/solargraph/checkGemVersion', { verbose: false })
+			}
+
+			// Format on save if specified
+			if (configFor(solargraph.config.solargraph.get("formatting")) == "onsave") {
+				const didAddTextEditorHandler = nova.workspace.onDidAddTextEditor((editor) => {
+					if (!solargraph.SYNTAXES.includes(editor.document.syntax)) return
+
+					const didSaveHandler = editor.onDidSave(async (editor) => {
+						nova.commands.invoke("tommasonegri.solargraph.editor._format", editor, { verbose: false })
+					})
+
+					const didDestroyHandler = editor.onDidDestroy(() => {
+						didSaveHandler.dispose()
+					})
+
+					this.formatOnSaveEventHandlers.push(didSaveHandler)
+					this.formatOnSaveEventHandlers.push(didDestroyHandler)
+				})
+
+				this.formatOnSaveEventHandlers.push(didAddTextEditorHandler)
+			}
+
+			// Populate symbols sidebar
+			if (configFor(solargraph.config.solargraph.get("symbols"))) {
+				setTimeout(() => {
+					nova.commands.invoke("tommasonegri.solargraph.sidebar.symbols.commands.refresh")
+				}, 2000)
+			}
+
+			// Check if the server stopped or crashed
+			client.onDidStop((error) => {
+				nova.workspace.config.set("tommasonegri.solargraph.internals.stopped", true)
+
+				if (error) {
+					nova.workspace.config.set("tommasonegri.solargraph.internals.crashed", true)
+
+					console.error(error)
+
+					const message  = `Server stopped unexpectedly: ${error}\n\nIf you are not going to use Solargraph in this project and want to silence this message, disable the server from the project settings.`
+					const options  = { buttons: ["OK", "Project settings"] }
+					const callback = (action) => {
+						switch (action) {
+							case 0:
+								break
+							case 1:
+								nova.workspace.openConfig()
+								break
+						}
+					}
+
+					nova.workspace.showActionPanel(message, options, callback)
+				}
+			})
+		} catch (error) {
+			console.error(error.message)
+		}
+	}
+
+	deactivate() {
+		if (nova.inDevMode()) console.log("Deactivating Solargraph...")
+
+		nova.workspace.config.remove("tommasonegri.solargraph.internals.stopped")
+		nova.workspace.config.remove("tommasonegri.solargraph.internals.crashed")
+
+		if (this.languageClient) {
+			this.languageClient.stop()
+			nova.subscriptions.remove(this.languageClient)
+			this.languageClient = null
+		}
+
+		this.formatOnSaveEventHandlers.forEach(handler => handler.dispose())
+	}
 }
 
+/** @private */
 class CustomRequests {
-  constructor() {
-    /**
-     * @type {LanguageClient}
-     */
-    this.languageClient = null
-  }
+	constructor() {
+		/** @type {LanguageClient} */
+		this.languageClient = null
+	}
 
-  /**
-   * @param {LanguageClient} languageClient
-   */
-  setLanguageClient(languageClient) {
-    this.languageClient = languageClient
-  }
+	/**
+	 * Send a formatting request to the server and return the response.
+	 * @param {TextEditor} editor
+	 * @param {object} options
+	 * @param {boolean} [options.verbose=true]
+	 * @returns {Promise<TextEdits[]>}
+	 */
+	formatting(editor, options) {
+		const { verbose = true } = options
 
-  /**
-   * Request a formatting action and apply the response
-   * @param {TextEditor} editor
-   */
-  formatting(editor) {
-    if (!this.isRunning) return
-    if (configFor(solargraph.config.solargraph.get("formatting")) == "Disabled") return
+		if (!nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
+			if (verbose) console.warn("Impossible to format the document: server not enabled in the project.")
+			return []
+		}
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+			if (verbose) console.warn("Impossible to format the document: server not running.")
+			return []
+		}
 
-    solargraph.requests.formatting(this.languageClient, editor)
-  }
+		if (configFor(solargraph.config.solargraph.get("formatting")) == false) {
+			const message  = "Document formatting is disabled. You can enable it from the extension or project settings."
+			const options  = { buttons: ["OK", "Project settings", "Extension settings"] }
+			const callback = (action) => {
+				switch (action) {
+					case 0:
+						break
+					case 1:
+						nova.workspace.openConfig()
+						break
+					case 2:
+						nova.openConfig()
+						break
+				}
+			}
 
-  /**
-   * Request a find references action and display the response
-   * @param {TextEditor} editor
-   * @return {Object[]} references
-   */
-  findReferences(editor) {
-    if (!this.isRunning) return []
-    if (!configFor(solargraph.config.solargraph.get("references"))) return []
+			nova.workspace.showActionPanel(message, options, callback)
 
-    return solargraph.requests.findReferences(this.languageClient, editor)
-  }
+			return []
+		}
 
-  /**
-   * Return a bool indicating if the languageClient has been set
-   * @type {boolean}
-   */
-  get isRunning() {
-    return this.languageClient != null
-  }
+		return solargraph.requests.formatting(this.languageClient, editor)
+	}
+
+	/**
+	 * Send a find references request to the server and return the response.
+	 * @param {TextEditor} editor
+	 * @return {Promise<Location[]>}
+	 */
+	findReferences(editor) {
+		if (!nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
+			console.warn("Impossible to find references: server not enabled in the project.")
+			return []
+		}
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+			console.warn("Impossible to find references: server not running.")
+			return []
+		}
+
+		if (!configFor(solargraph.config.solargraph.get("references"))) {
+			const message  = "Finding references is disabled. You can enable it from the extension or project settings."
+			const options  = { buttons: ["OK", "Project settings", "Extension settings"] }
+			const callback = (action) => {
+				switch (action) {
+					case 0:
+						break
+					case 1:
+						nova.workspace.openConfig()
+						break
+					case 2:
+						nova.openConfig()
+						break
+				}
+			}
+
+			nova.workspace.showActionPanel(message, options, callback)
+
+			return []
+		}
+
+		return solargraph.requests.findReferences(this.languageClient, editor)
+	}
+
+	/**
+	 * Send a find workspace symbol request to the server and return the response.
+	 * @param {symbol} symbol
+	 * @return {Promise<SymbolInformation[]>}
+	 */
+	findSymbols(symbol) {
+		if (!nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
+			console.warn("Impossible to find workspace symbols: server not enabled in the project.")
+			return []
+		}
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+			console.warn("Impossible to find workspace symbols: server not running.")
+			return []
+		}
+
+		if (!configFor(solargraph.config.solargraph.get("symbols"))) {
+			const message  = "Symbols are disabled. You can enable them from the extension or project settings."
+			const options  = { buttons: ["OK", "Project settings", "Extension settings"] }
+			const callback = (action) => {
+				switch (action) {
+					case 0:
+						break
+					case 1:
+						nova.workspace.openConfig()
+						break
+					case 2:
+						nova.openConfig()
+						break
+				}
+			}
+
+			nova.workspace.showActionPanel(message, options, callback)
+
+			return []
+		}
+
+		return solargraph.requests.findSymbols(this.languageClient, symbol)
+	}
+
+	/** @param {LanguageClient} languageClient */
+	setLanguageClient(languageClient) {
+		this.languageClient = languageClient
+	}
 }
 
-module.exports = SolargraphLanguageServer
+module.exports = LanguageServer

@@ -1,211 +1,213 @@
-const SolargraphLanguageServer  = require("./LanguageServer")
-const SolargraphWebviewProvider = require("./WebviewProvider")
-const SolargraphSidebar         = require("./Sidebar")
-const solargraph                = require("./utils/index")
-const {
-  showNotification,
-  debounce,
-  parseURI,
-  buildGemDocs
-} = require("./helpers")
+const LanguageServer       = require("./LanguageServer")
+const Sidebar              = require("./Sidebar")
+const solargraph           = require("./utils/index")
+const { showNotification } = require("./helpers")
 
-/**
- * Solargraph language server
- * @type {SolargraphLanguageServer}
- */
+/** @type {LanguageServer} */
 let langserver = null
 
-/**
- * Web view provider
- * @type {SolargraphWebviewProvider}
- */
-let webViewProvider = null
-
-/**
- * Extension sidebar
- * @type {SolargraphSidebar}
- */
+/** @type {Sidebar} */
 let sidebar = null
 
-exports.activate = function() {
-  langserver = new SolargraphLanguageServer()
-  langserver.activate()
+/** Activate the extension. */
+exports.activate = async function() {
+	langserver = new LanguageServer()
 
-  webViewProvider = new SolargraphWebviewProvider(langserver.languageClient)
-  nova.subscriptions.add(webViewProvider)
+	if (nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
+		langserver.activate()
+	}
 
-  sidebar = new SolargraphSidebar()
-  nova.subscriptions.add(sidebar)
-
-  solargraph.config.keys.forEach(key => {
-    const globalListener = nova.config.onDidChange(key, debounce(reload, 500))
-    nova.subscriptions.add(globalListener)
-
-    const workspaceListener = nova.workspace.config.onDidChange(key, debounce(reload, 500))
-    nova.subscriptions.add(workspaceListener)
-  })
+	sidebar = new Sidebar()
 }
 
+/** Deactivate the extension. */
 exports.deactivate = function() {
-  if (langserver) {
-    langserver.deactivate()
-    langserver = null
-  }
+	nova.workspace.config.remove("tommasonegri.solargraph.internals.skipFormatOnSave")
+
+	if (langserver) {
+		langserver.deactivate()
+		langserver = null
+	}
 }
 
+/** Reload the extension. */
 const reload = () => {
-  exports.deactivate()
-  exports.activate()
+	exports.deactivate()
+	exports.activate()
 }
-
-// Open URL command (used internally for browsing documentation pages)
-nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph._openDocumentUrl", (_, uriString) => {
-    if (webViewProvider) {
-      const uri = parseURI(uriString)
-      webViewProvider.open(uri)
-    } else {
-      console.warn("Solargraph cannot find the web view provider.")
-    }
-  })
-)
 
 // Restart command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.restart", () => {
-    reload()
-    showNotification({ title: "Solargraph server restarted." })
-  })
-)
+	nova.commands.register("tommasonegri.solargraph.restart", () => {
+		if (!nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
+			showNotification({
+				title: "Impossible to restart the server",
+				body: "The server is disabled in the current project. Go to the project settings to enable it.",
+				actions: ["OK", "Project settings"],
+				handler: (response) => {
+					switch (response.actionIdx) {
+						case 0:
+							break
+						case 1:
+							nova.workspace.openConfig()
+							break
+					}
+				}
+			})
 
-// Search command
-nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.search", () => {
-    nova.workspace.showInputPalette("Search Ruby documentation", { placeholder: "Search..." }, (input) => {
-      if (!input) return
+			console.warn("Impossible to restart the server: server not enabled in the project.")
+			return
+		}
 
-      if (webViewProvider) {
-        const searchCommand = `solargraph:/search?query=${encodeURIComponent(input)}`
-        const uri = parseURI(searchCommand)
-        webViewProvider.open(uri)
-      } else {
-        console.warn("Solargraph cannot find the web view provider.")
-      }
-    })
-  })
-)
-
-// Environment command
-nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.environment", () => {
-    if (webViewProvider) {
-      const uri = parseURI("solargraph:/environment")
-      webViewProvider.open(uri)
-    } else {
-      console.warn("Solargraph cannot find the web view provider.")
-    }
-  })
+		reload()
+		showNotification({ title: "Solargraph server restarted" })
+	})
 )
 
 // Check gem version command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.checkGemVersion", () => {
-    if (langserver.languageClient) {
-      langserver.languageClient.sendNotification("$/solargraph/checkGemVersion", { verbose: true })
-    } else {
-      showNotification({ title: "Solargraph is still starting. Please try again in a moment." })
-    }
-  })
+	nova.commands.register("tommasonegri.solargraph.checkGemVersion", () => {
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.stopped")) {
+			console.warn("Impossible to check gem version: server not running.")
+			return
+		}
+
+		langserver.languageClient.sendNotification("$/solargraph/checkGemVersion", { verbose: true })
+	})
 )
 
-// Build gem documentation command
-nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.buildGemDocs", () => {
-    try {
-      showNotification({ title: "Building new gem documentation" })
-      buildGemDocs(langserver.languageClient, false)
-    } catch (error) {
-      const message = "Error building gem documentation."
-
-      nova.workspace.showErrorMessage(message)
-      console.error(message, error.message)
-    }
-  })
-)
-
-// Rebuild gems documentation command
-nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.rebuildAllGemDocs", () => {
-    try {
-      showNotification({ title: "Rebuilding all gem documentation..." })
-      buildGemDocs(langserver.languageClient, true)
-    } catch (error) {
-      const message = "Error rebuilding gem documentation."
-
-      nova.workspace.showErrorMessage(message)
-      console.error(message, error.message)
-    }
-  })
-)
-
+// TODO: Make sure config command is safe
 // Generate configuration command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.config", () => {
-    try {
-      solargraph.commands.solargraph(["config"], solargraph.config)
+	nova.commands.register("tommasonegri.solargraph.config", async () => {
+		try {
+			await solargraph.commands.solargraph(["config"], solargraph.config)
 
-      showNotification({ title: "Created default .solargraph.yml file." })
-    } catch (error) {
-      const message = "Error creating .solargraph.yml file."
+			showNotification({
+				title: "Config file generated",
+				body: "You should see a new .solargraph.yml file in the root of the project."
+			})
+		} catch (error) {
+			const message = "Something went wrong creating .solargraph.yml file."
 
-      nova.workspace.showErrorMessage(message)
-      console.error(message, error.message)
-    }
-  })
+			nova.workspace.showErrorMessage(`${message}\n\nCheck out the Extension Console for more info.`)
+			console.error(`${message}\n\n${error}`)
+		}
+	})
 )
 
-// Download core command
+// EDITOR COMMANDS
+
+// Internal format command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.downloadCore", () => {
-    if (langserver.languageClient) {
-      langserver.languageClient.sendNotification("$/solargraph/downloadCore", { verbose: true })
-    } else {
-      showNotification({ title: "Solargraph is still starting. Please try again in a moment." })
-    }
-  })
+	nova.commands.register("tommasonegri.solargraph.editor._format", async (_, editor, options = {}) => {
+		if (nova.workspace.config.get("tommasonegri.solargraph.internals.skipFormatOnSave")) {
+			nova.workspace.config.remove("tommasonegri.solargraph.internals.skipFormatOnSave")
+			return
+		}
+
+		const textEdits = await langserver.customRequests.formatting(editor, options)
+
+		textEdits.forEach((textEdit) => {
+			solargraph.requests.helpers.applyTextEdit(editor, textEdit)
+		})
+	})
 )
 
-// Format document command
+// Format command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.format", (editor) => {
-    langserver.customRequests.formatting(editor)
-  })
+	nova.commands.register("tommasonegri.solargraph.editor.format", (editor) => {
+		nova.commands.invoke("tommasonegri.solargraph.editor._format", editor)
+	})
+)
+
+// TODO: Make sure command is safe
+// Save without formatting command
+nova.subscriptions.add(
+	nova.commands.register("tommasonegri.solargraph.editor.saveWithoutFormatting", (editor) => {
+		if (nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
+			nova.workspace.config.set("tommasonegri.solargraph.internals.skipFormatOnSave", true)
+		}
+
+		editor.save()
+	})
 )
 
 // Find references command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.findReferences", async (editor) => {
-    const symbol     = editor.selectedText
-    const references = await langserver.customRequests.findReferences(editor)
+	nova.commands.register("tommasonegri.solargraph.editor.findReferences", async (editor) => {
+		const symbol     = editor.selectedText
+		const references = await langserver.customRequests.findReferences(editor)
 
-    sidebar.displaySymbolReferences(symbol, references)
-  })
+		sidebar.references.display(symbol, references)
+	})
 )
+
+// SIDEBAR COMMANDS
+
+// References - Open file command
+nova.subscriptions.add(
+	nova.commands.register("tommasonegri.solargraph.sidebar.references.commands.openFile", () => {
+		const selection = sidebar.references.tree.selection[0]
+		const path      = selection.path || selection.parent.path
+
+		nova.workspace.openFile(path, {
+			line: selection.line,
+			column: selection.column
+		})
+	})
+)
+
+// Symbols - Refresh command
+nova.subscriptions.add(
+	nova.commands.register("tommasonegri.solargraph.sidebar.symbols.commands.refresh", async () => {
+		const symbols = await langserver.customRequests.findSymbols()
+
+		sidebar.symbols.display(symbols)
+	})
+)
+
+// Symbols - Open file command
+nova.subscriptions.add(
+	nova.commands.register("tommasonegri.solargraph.sidebar.symbols.commands.openFile", () => {
+		const selection = sidebar.symbols.tree.selection[0]
+		const path      = selection.path
+
+		nova.workspace.openFile(path)
+	})
+)
+
+// SETTINGS COMMANDS
 
 // Restore default settings command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.restoreSettings", () => {
-    solargraph.config.keys.forEach(key => {
-      nova.config.remove(key)
-    })
-  })
+	nova.commands.register("tommasonegri.solargraph.restoreSettings", () => {
+		solargraph.config.keys.forEach(key => {
+			nova.config.remove(key)
+		})
+
+		showNotification({
+			title: "Extension settings restored",
+			body: "Restarting the server..."
+		})
+
+		nova.commands.invoke("tommasonegri.solargraph.restart")
+	})
 )
 
 // Restore default workspace settings command
 nova.subscriptions.add(
-  nova.commands.register("tommasonegri.solargraph.restoreWorkspaceSettings", () => {
-    solargraph.config.keys.forEach(key => {
-      nova.workspace.config.remove(key)
-    })
-  })
+	nova.commands.register("tommasonegri.solargraph.restoreWorkspaceSettings", () => {
+		solargraph.config.keys.forEach(key => {
+			nova.workspace.config.remove(key)
+		})
+		nova.workspace.config.remove("tommasonegri.solargraph.workspace.enabled")
+
+		showNotification({
+			title: "Workspace settings restored",
+			body: "Restarting the server..."
+		})
+
+		nova.commands.invoke("tommasonegri.solargraph.restart")
+	})
 )

@@ -1,6 +1,9 @@
 #!/bin/sh
 
-# Make sure to cd into the workspace directory
-# before running the bundle command
+# A simple bridge that change directory to the current workspace
+# before running the bundle command.
+
+# Since Nova does not allow to run a Language Servers process as shell this is
+# required in order to run Solargraph from the bundle.
 
 cd $1 && "${@:3}"
