@@ -9,6 +9,8 @@ let langserver = null
 /** @type {Sidebar} */
 let sidebar = null
 
+let skipFormatOnSave = false
+
 /** Activate the extension. */
 exports.activate = async function() {
 	langserver = new LanguageServer()
@@ -22,8 +24,6 @@ exports.activate = async function() {
 
 /** Deactivate the extension. */
 exports.deactivate = function() {
-	nova.workspace.config.remove("tommasonegri.solargraph.internals.skipFormatOnSave")
-
 	if (langserver) {
 		langserver.deactivate()
 		langserver = null
@@ -101,8 +101,8 @@ nova.subscriptions.add(
 // Internal format command
 nova.subscriptions.add(
 	nova.commands.register("tommasonegri.solargraph.editor._format", async (_, editor, options = {}) => {
-		if (nova.workspace.config.get("tommasonegri.solargraph.internals.skipFormatOnSave")) {
-			nova.workspace.config.remove("tommasonegri.solargraph.internals.skipFormatOnSave")
+		if (skipFormatOnSave) {
+			skipFormatOnSave = false
 			return
 		}
 
@@ -126,7 +126,7 @@ nova.subscriptions.add(
 nova.subscriptions.add(
 	nova.commands.register("tommasonegri.solargraph.editor.saveWithoutFormatting", (editor) => {
 		if (nova.workspace.config.get("tommasonegri.solargraph.workspace.enabled")) {
-			nova.workspace.config.set("tommasonegri.solargraph.internals.skipFormatOnSave", true)
+			skipFormatOnSave = true
 		}
 
 		editor.save()
