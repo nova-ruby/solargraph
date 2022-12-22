@@ -1,16 +1,39 @@
 {
-	"identifier": "com.tommasonegri.Solargraph",
+	"identifier": "com.tommasonegri.solargraph",
 	"name": "Solargraph",
 	"organization": "Tommaso Negri",
 	"description": "A Ruby language server featuring code completion, intellisense, and inline documentation.",
 	"version": "1.0",
-	"categories": ["languages"],
+
+	"license": "MIT",
+	"repository": "https://github.com/nova-ruby/solargraph",
+	"bugs": "https://github.com/nova-ruby/solargraph/issues",
+	"funding": "https://www.paypal.com/paypalme/tommasonegri/25EUR",
+
+	"categories": [
+		"languages",
+		"commands",
+		"sidebars",
+		"completions",
+		"issues",
+		"formatters"
+	],
+	"keywords": [
+		"solargraph",
+		"ruby",
+		"rails",
+		"nova",
+		"ruby on rails",
+		"bridgetown",
+		"roda"
+	],
 
 	"main": "main.js",
 
 	"activationEvents": [
 		"onLanguage:ruby",
 		"onWorkspaceContains:*.rb",
+		"onWorkspaceContains:*.ru",
 		"onWorkspaceContains:.rubocop.yml",
 		"onWorkspaceContains:.solargraph.yml",
 		"onCommand:tommasonegri.solargraph.restart",
@@ -56,9 +79,14 @@
 				"command": "tommasonegri.solargraph.editor.findReferences",
 				"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorHasSelection && editorSyntax == 'ruby'"
 			},
+			{
+				"title": "Rename Symbol",
+				"command": "tommasonegri.solargraph.editor.rename",
+				"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorHasSelection && editorSyntax == 'ruby'"
+			},
 			{ "separator": true },
 			{
-				"title": "Format",
+				"title": "Format Document",
 				"command": "tommasonegri.solargraph.editor.format",
 				"when": "tommasonegri.solargraph.internals.server.error != true && tommasonegri.solargraph.workspace.enabled != false && editorHasFocus && editorSyntax == 'ruby'"
 			},
