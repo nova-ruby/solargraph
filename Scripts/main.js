@@ -76,7 +76,6 @@ nova.subscriptions.add(
 	})
 )
 
-// TODO: Make sure config command is safe
 // Generate configuration command
 nova.subscriptions.add(
 	nova.commands.register("tommasonegri.solargraph.config", async () => {
@@ -121,7 +120,6 @@ nova.subscriptions.add(
 	})
 )
 
-// TODO: Make sure command is safe
 // Save without formatting command
 nova.subscriptions.add(
 	nova.commands.register("tommasonegri.solargraph.editor.saveWithoutFormatting", (editor) => {
