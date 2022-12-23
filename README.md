@@ -1,72 +1,60 @@
-<!--
-👋 Hello! As Nova users browse the extensions library, a good README can help them understand what your extension does, how it works, and what setup or configuration it may require.
+<p align="center">
+	<img src="https://raw.githubusercontent.com/nova-ruby/solargraph/main/misc/extension.png" width="80" height="80">
+</p>
+<h1 align="center">Solargraph for Nova</h1>
 
-Not every extension will need every item described below. Use your best judgement when deciding which parts to keep to provide the best experience for your new users.
+Connect Nova to **[Solargraph](https://solargraph.org)** language server. Solargraph provides intellisense, code completion, and inline documentation for Ruby.
 
-💡 Quick Tip! As you edit this README template, you can preview your changes by selecting **Extensions → Activate Project as Extension**, opening the Extension Library, and selecting "Solargraph" in the sidebar.
+> Please be patient if you get into issues or limitations. We are still testing and improving the extension.
 
-Let's get started!
--->
+## Features
 
-<!--
-🎈 Include a brief description of the features your extension provides. For example:
--->
+### Supported
 
-**Solargraph** provides deep integration with **An Important Language**, including the most important feature, something that's really helpful, and _a little-known secret!_
+- Code completions
+- Go to definition
+- Diagnostics (RuboCop required)
+- Format (RuboCop required)
+- Format on save (RuboCop required)
+- Documentation on hover
+- Find references
+- Workspace symbols
+- Rename symbol
 
-<!--
-🎈 It can also be helpful to include a screenshot or GIF showing your extension in action:
--->
+### Not supported
 
-![](https://nova.app/images/en/dark/editor.png)
+- Code folding
+- Search documentation
+- On type formatting
 
 ## Requirements
 
-<!--
-🎈 If your extension depends on external processes or tools that users will need to have, it's helpful to list those and provide links to their installers:
--->
+You need to install the Ruby gem:
 
-Solargraph requires some additional tools to be installed on your Mac:
+```
+$ gem install solargraph
+```
 
-- [Node.js 8.2.0](https://nodejs.org) and NPM 5.2.0 or newer
+### Run from bundle
 
-<!--
-✨ Providing tips, tricks, or other guides for installing or configuring external dependencies can go a long way toward helping your users have a good setup experience:
--->
+If you want you can use the Solargraph version installed in your project bundle.
 
-> To install the current stable version of Node, click the "Recommended for Most Users" button to begin the download. When that completes, double-click the **.pkg** installer to begin installation.
+Start by adding the gem to the development group:
 
-## Usage
+```
+$ bundle add solargraph --group=development --require=false
+```
 
-<!--
-🎈 If your extension provides features that are invoked manually, consider describing those options for users:
--->
+Then you can check the `Use Bundler` config in the extension or project settings.
 
-To run Solargraph:
+> Warning: If you have the `Use Bundler` config checked but you have not added Solargraph to the bundle, the extension will raise an error.
 
-- Select the **Editor → Solargraph** menu item; or
-- Open the command palette and type `Solargraph`
+## Diagnostics & Formatting
 
-<!--
-🎈 Alternatively, if your extension runs automatically (as in the case of a validator), consider showing users what they can expect to see:
--->
+Solargraph uses [RuboCop](https://rubocop.org) to provide diagnostics and formatting. Make sure to install that gem too.
 
-Solargraph runs any time you open a local project, automatically lints all open files, then reports errors and warnings in Nova's **Issues** sidebar and the editor gutter:
+When you have RuboCop installed you can opt-in for diagnostics and formatting from the extension or project settings.
 
-![](https://nova.app/images/en/dark/tools/sidebars.png)
+## Find references & Workspace symbols
 
-### Configuration
-
-<!--
-🎈 If your extension offers global- or workspace-scoped preferences, consider pointing users toward those settings. For example:
--->
-
-To configure global preferences, open **Extensions → Extension Library...** then select Solargraph's **Preferences** tab.
-
-You can also configure preferences on a per-project basis in **Project → Project Settings...**
-
-<!--
-👋 That's it! Happy developing!
-
-P.S. If you'd like, you can remove these comments before submitting your extension 😉
--->
+You can see the workspace symbols and find references results in the Nova's Solargraph sidebar.
