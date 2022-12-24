@@ -9,8 +9,6 @@ Connect Nova to **[Solargraph](https://solargraph.org)** language server. Solarg
 
 ## Features
 
-### Supported
-
 - Code completions
 - Go to definition
 - Diagnostics (RuboCop required)
@@ -21,23 +19,35 @@ Connect Nova to **[Solargraph](https://solargraph.org)** language server. Solarg
 - Workspace symbols
 - Rename symbol
 
-### Not supported
+## Setup
 
-- Code folding
-- Search documentation
-- On type formatting
-
-## Requirements
-
-You need to install the Ruby gem:
+Start by installing the Ruby gem:
 
 ```
 $ gem install solargraph
 ```
 
-### Run from bundle
+Then install the documentation for the current version of Ruby:
 
-If you want you can use the Solargraph version installed in your project bundle.
+```
+$ solargraph download-core
+```
+
+Finally generate the documentation for the installed gems:
+
+```
+$ yard gems
+```
+
+### Ruby on Rails setup
+
+Follow this [guide](https://solargraph.org/guides/rails) to configure Solargraph so it can pair well with Rails.
+
+Consider installing this [plugin](https://github.com/iftheshoefritz/solargraph-rails) too.
+
+## Launch from bundle
+
+Alternatively, the extension can also launch Solargraph from the project bundle.
 
 Start by adding the gem to the development group:
 
@@ -45,16 +55,16 @@ Start by adding the gem to the development group:
 $ bundle add solargraph --group=development --require=false
 ```
 
-Then you can check the `Use Bundler` config in the extension or project settings.
+Then check the `Use Bundler` config in the extension or project settings.
 
-> Warning: If you have the `Use Bundler` config checked but you have not added Solargraph to the bundle, the extension will raise an error.
+> Warning: If the `Use Bundler` config is checked but Solargraph is not in the bundle, the extension will raise an error.
 
 ## Diagnostics & Formatting
 
 Solargraph uses [RuboCop](https://rubocop.org) to provide diagnostics and formatting. Make sure to install that gem too.
 
-When you have RuboCop installed you can opt-in for diagnostics and formatting from the extension or project settings.
+When RuboCop is installed you can opt-in for diagnostics and formatting from the extension or project settings.
 
 ## Find references & Workspace symbols
 
-You can see the workspace symbols and find references results in the Nova's Solargraph sidebar.
+Workspace symbols and find references results are going to be displayed in the Solargraph sidebar inside Nova.
