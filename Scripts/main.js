@@ -122,8 +122,6 @@ nova.subscriptions.add(
 		})
 		const changes       = Object.entries(workspaceEdit.changes)
 
-		console.log(files)
-
 		/** @type {boolean} */
 		const confirmation = await new Promise((resolve) => {
 			const message  = `Are you sure? The following files will be modified:\n\n${relativeFiles.join("\n")}`
@@ -144,8 +142,6 @@ nova.subscriptions.add(
 
 		if (confirmation) {
 			for ([uri, textEdits] of changes) {
-				console.log(textEdits)
-
 				const editor = await nova.workspace.openFile(uri)
 
 				if (!editor) return

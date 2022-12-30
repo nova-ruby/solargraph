@@ -6,9 +6,9 @@ class SidebarReferences {
 
 		this.rootItems = []
 
-		this.getChildren = this.getChildren.bind(this)
-		this.getParent   = this.getParent.bind(this)
-		this.getTreeItem = this.getTreeItem.bind(this)
+		// this.getChildren = this.getChildren.bind(this)
+		// this.getParent   = this.getParent.bind(this)
+		// this.getTreeItem = this.getTreeItem.bind(this)
 	}
 
 	reload() {
@@ -68,17 +68,15 @@ class SidebarReferences {
 	}
 
 	/**
-	 * @private
 	 * @param {TreeItem} element
 	 */
 	getChildren(element) {
-		if (!this.rootItems?.length > 0) return []
+		if (!(this.rootItems?.length > 0)) return []
 
 		return !element ? this.rootItems : element.children
 	}
 
 	/**
-	 * @private
 	 * @param {TreeItem} element
 	 */
 	getParent(element) {
@@ -86,7 +84,6 @@ class SidebarReferences {
 	}
 
 	/**
-	 * @private
 	 * @param {TreeItem} element
 	 */
 	getTreeItem(element) {

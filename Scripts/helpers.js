@@ -3,7 +3,7 @@
  * @param {string} [options.id=null]
  * @param {string} [options.title=null]
  * @param {string} [options.body=null]
- * @param {[string]} [options.actions=null]
+ * @param {string[]} [options.actions=null]
  * @param {function(NotificationResponse)} [options.handler=null]
  */
 exports.showNotification = function({ id = null, title = null, body = null, actions = null, handler = null}) {

@@ -26,10 +26,20 @@ class LanguageServer {
 		const path = solargraph.commands.helpers.solargraph.path(solargraph.config)
 		const args = solargraph.commands.helpers.solargraph.args(solargraph.config)
 
+		const useBundler  = configFor(solargraph.config.solargraph.get("useBundler"))
+		const bundlerPath = configFor(solargraph.config.solargraph.get("bundlerPath"))
+
+		if (useBundler && bundlerPath) {
+			args[1] = args[1] + " stdio"
+		} else {
+			args[1] = "stdio"
+		}
+
 		const serverOptions = {
 			path: path,
-			args: [...args, "stdio"],
-			type: "stdio"
+			args: args,
+			type: "stdio",
+			env: nova.workspace.config.get("tommasonegri.solargraph.workspace.env") || {}
 		}
 
 		const clientOptions = {

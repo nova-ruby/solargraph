@@ -10,13 +10,12 @@ const solargraph = {
 		const bundlerPath = configFor(config.solargraph.get("bundlerPath"))
 
 		if (useBundler && bundlerPath) {
-			// Use bundlerbridge to cd in the workspace directory before running the bundler.
-			// This is necessary because Nova doesn't allow to run LSP in shell processes.
-			return nova.path.join(nova.extension.path, "Scripts", "bin", "bundlerbridge")
+			return nova.environment.SHELL
 		} else {
 			return "/usr/bin/env"
 		}
 	},
+
 	/**
 	 * Return the args for the Solargraph command.
 	 * @param {object} config
@@ -27,8 +26,7 @@ const solargraph = {
 		const commandPath = configFor(config.solargraph.get("commandPath"))
 
 		if (useBundler && bundlerPath) {
-			// Prepend the command with the workspace directory so that bundlerbridge can cd into it.
-			return [ nova.workspace.path, "--", bundlerPath, "exec", "solargraph" ]
+			return [ "-c", `cd ${nova.workspace.path}; bundle exec solargraph` ]
 		} else {
 			return [ commandPath ]
 		}
