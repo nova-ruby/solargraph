@@ -54,7 +54,7 @@ exports.rangeToLspRange = (document, range) => {
  * @param {TextEdit} textEdit
  */
 exports.applyTextEdit = (editor, textEdit) => {
-	editor.edit((edit) => {
+	return editor.edit((edit) => {
 		const range = exports.lspRangeToRange(editor.document, textEdit.range)
 
 		edit.replace(range, textEdit.newText)
