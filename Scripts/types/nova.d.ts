@@ -1,13 +1,11 @@
-/*~*~* REFRESH_TOKEN: 9be1dd111cb6df668142 *~*~*/
+/*~*~* REFRESH_TOKEN: 7bd50adbbfba08ffa3d1 *~*~*/
 /***** UP TO DATE WITH NOVA: 10.6 *****/
 
 // DO NOT CHANGE OR MOVE THE REFRESH TOKEN ABOVE.
 // Nova Types uses it to determine if the types are up to date.
 
-// Type definitions for non-npm package nova-editor-node 4.1
 // Project: https://docs.nova.app/api-reference/
 // Definitions by: Tommaso Negri <https://github.com/tommasongr>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // Minimum TypeScript Version: 3.3
 
 /// https://docs.nova.app/extensions/#javascript-runtime
@@ -310,10 +308,12 @@ declare class Color {
 interface ColorCandidate {
 	/** The range of the document where the color exists, as a [Range](https://docs.nova.app/api-reference/range) object. */
 	range: Range
+	// TODO: Check for undefined
 
 	/** The textual contents of the document at the candidate’s range as a `String`. */
 	text: string
-	// TODO: Check if it is readonly or not
+	// TODO: Check if it is settable since undocumented
+	// TODO: Check for undefined
 }
 
 /// https://docs.nova.app/api-reference/color-information/
@@ -369,7 +369,7 @@ interface ColorInformationContext {
 	 *
 	 * If no color information could be parsed from the syntax tree, this property will be an empty array.
 	 */
-	readonly candidates: ColorCandidate[]
+	readonly candidates: ReadonlyArray<ColorCandidate>
 }
 
 /// https://docs.nova.app/api-reference/color-presentation/
@@ -392,29 +392,27 @@ declare class ColorPresentation {
 	constructor(label: string, kind?: string)
 
 	/** An array of [TextEdit](https://docs.nova.app/api-reference/text-edit) objects describing additional changes to apply to the editor when this presentation is chosen, unrelated to the change made via the `textEdit` or `label` properties. The ranges of these edits must not intersect each other nor the current editor selection. */
-	additionalTextEdits: TextEdit[]
+	additionalTextEdits?: TextEdit[]
 
 	/** The closest [Color Format](https://docs.nova.app/api-reference/color/#formats) for which the provided color presentation represents. This property may be provided as a hint as to which editing controls should be displayed when the presentation is chosen. If not provided, the color picker will attempt to interpret to the best of its ability. */
-	readonly format: ColorFormat
-	// TODO: Check if it is settable
+	format?: ColorFormat
 
 	/** The text used when inserting the presentation into the editor. If not specified, `label` will be used. */
-	insertText: string
+	insertText?: string
 
 	/**
 	 * The presentation kind may be a string that represents the “type” of the color presentation.
 	 *
 	 * This value will be used by a color picker to automatically select the most consistent representation based on any existing color at the relevant location when performing color mixing. This string is arbitrary and can be decided by the extension.
 	 */
-	kind: string
+	kind?: string
 
 	/** The user-readable label for the presentation. This will be displayed in the color picker’s presentations list. */
 	label: string
 
 	/**
 	A boolean value indicating whether the presentation uses floating-point values for its components (not including alpha), such as an RGB presentation that uses floating point values between `0.0` and `1.0`. This property may be provided as a hint as to which editing controls should be displayed when the presentation is chosen. If not provided, it is assumed this value is `false`. */
-	readonly usesFloats: boolean
-	// TODO: Check if it is settable
+	usesFloats?: boolean
 }
 
 /// https://docs.nova.app/api-reference/color-presentation-context/
@@ -516,8 +514,7 @@ interface CompletionContext {
 	readonly reason: CompletionReason
 
 	/** An array of [ScopeSelector](https://docs.nova.app/api-reference/scope-selector) objects that reflect the tree of syntax grammar selectors for the completion position. The array will be ordered depth, with deepest first, where the first item in the array is the syntax scope encompassing the completion position, the next item is its ancestor, onwards to the final item which represents the root of the tree. */
-	readonly selectors: ScopeSelector[]
-	// TODO: Check if it is settable
+	readonly selectors: ReadonlyArray<ScopeSelector>
 
 	/**
 	 * The character that triggered the completion request as a `String`. If the request was not triggered by a character (such as if the `reason` is `Invoke`), this will return `null` or `undefined`.
@@ -591,7 +588,6 @@ declare class CompletionItem {
 	 * @since 7.0
 	 */
 	path?: string
-	// TODO: Check if it is settable
 
 	/** A [Range](https://docs.nova.app/api-reference/range) value that describes the textual range within the editor that should be replaced when the item is chosen. If not specified, the word preceeding the cursor will be replaced. */
 	range?: Range
@@ -963,12 +959,25 @@ interface Credentials {
 
 /// https://docs.nova.app/api-reference/crypto/
 
+type IntegerTypedArray =
+| Int8Array
+| Uint8Array
+| Uint8ClampedArray
+| Int16Array
+| Uint16Array
+| Int32Array
+| Uint32Array
+// | BigInt64Array
+// | BigUint64Array
+// TODO: Int64 arrays are not resolved
+
+/**
+ * The `nova.crypto` global object is used to generate cryptographic primitives for use in secure operations.
+ * @since 10.0
+ */
 interface Crypto {
-	/**
-	 * Filles the provided TypedArray with cryptographically-sound random values. The provided array should be one of the JavaScript integer-based typed arrays, such as `Int8Array`, `Uint8Array`, `Int16Array`, etc. All elements of the array will be overwritten. This method returns the same array instance as was passed as an argument.
-	 */
-	getRandomValues<T extends ArrayLike<number>>(typedArray: T): T
-	// TODO: Fix typed arrays
+	/** Fills the provided [TypedArray](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays) with cryptographically-sound random values. The provided array should be one of the JavaScript integer-based typed arrays, such as `Int8Array`, `Uint8Array`, `Int16Array`, etc. All elements of the array will be overwritten. This method returns the same array instance as was passed as an argument. */
+	getRandomValues<T extends IntegerTypedArray>(typedArray: T): T
 
 	/** Returns a randomly generated, 36-character UUID v4 identifier string. */
 	randomUUID(): string
@@ -997,7 +1006,6 @@ interface DebugSession {
 
 	/** The type string of the debug adapter coordinating the session. This value is the same as the `adapterType` argument provided when creating a [TaskDebugAdapterAction](https://docs.nova.app/api-reference/task-debug-adapter-action) object. */
 	readonly type: string
-	// TODO: Check if it is settable
 
 	/**
 	 * Adds an event listener that invokes the provided `callback` when a custom event is received from the adapter. The callback will receive as an argument a [DebugSessionCustomEvent](https://docs.nova.app/api-reference/debug-session-custom-event) object representing the event that was received.
@@ -1044,10 +1052,13 @@ interface DebugSession {
 interface DebugSessionCustomEvent {
 	/** The body of the event. This may be any JSON-codable value, including `null`. */
 	body: any
-	// TODO: Check JSON-codable type
+	// TODO: Check if it is settable
+	// TODO: Check for undefined
 
 	/** The event name as a string. */
 	event: string
+	// TODO: Check if it is settable
+	// TODO: Check for undefined
 }
 
 /// https://docs.nova.app/api-reference/disposable/
@@ -1149,7 +1160,7 @@ interface Environment {
 	readonly fs: FileSystem
 
 	/** An array of strings defining the user’s preferred languages, in BCP 47 format. */
-	readonly locales: string[]
+	readonly locales: ReadonlyArray<string>
 
 	/** The global instance of the Path object. */
 	readonly path: Path
@@ -1255,8 +1266,12 @@ interface File {
 	/** Returns the current position within the file as a number. */
 	tell(): number
 
-	// TODO: Complete file seek method
-	seek(offset: number, from?: number)
+	/**
+	 * This method moves the object’s position forward or backward by an amount specified by the `offset` argument. By default, this is relative to the file’s current position.
+	 *
+	 * If the optional from argument is specified, the move can be relative to the start of the file (from == `nova.fs.START`), the current position (from == `nova.fs.CURRENT`), the end of the file (from == `nova.fs.END`).
+	 */
+	seek(offset: number, from?: number): void
 
 	/**
 	 * Writes the specified value to the file at the current offset.
@@ -1266,16 +1281,13 @@ interface File {
 	 * If the value is a string, the value will be written using the file’s default encoding, unless the optional `encoding` argument is used to choose a specific encoding for the write.
 	 */
 	write(value: string | ArrayBuffer, encoding?: string): void
-}
 
-interface FileBinaryMode extends File {
-	/** Reads a number of bytes from the file at the current offset. If the `size` argument is specified, the file will attempt to read up to that number of bytes. If no more bytes are available, `null` will be returned. */
-	read(size?: number): ArrayBuffer | null
-}
-
-interface FileTextMode extends File {
-	/** Reads a number of bytes from the file at the current offset. If the `size` argument is specified, the file will attempt to read up to that number of bytes. If no more bytes are available, `null` will be returned. */
-	read(size?: number): string | null
+	/**
+	 * Reads a number of bytes from the file at the current offset. If the `size` argument is specified, the file will attempt to read up to that number of bytes. If no more bytes are available, `null` will be returned.
+	 *
+	 * When bytes are successfully read, if the file is in Binary mode, the returned object will be a [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) object. If it’s in Text mode, the returned object will be a string created using the file’s set encoding.
+	 */
+	read(size?: number): string | ArrayBuffer | null
 
 	/**
 	 * Reads a single line from the file, up to and including any newline. This can be used in a loop to read lines from a file efficiently. When reading the last line of a file, the returned string will not contain a newline. Thus, the return value should be unambiguous as to whether the end of the file has been reached.
@@ -1457,10 +1469,34 @@ interface FileSystem {
 	moveAsync<T>(src: string, dest: string, callback: (this: T, err?: Error) => void, thisValue: T): void
 
 	/**
-	 * Opens a file from the specified path, creating and returning a File object.
+	 * Opens a file from the specified path, creating and returning a [File](https://docs.nova.app/api-reference/file) object.
+	 *
+	 * The mode string argument specifies in what way the file is opened. It can contain the following components:
+	 * - **r**: Open for reading (default)
+	 * - **w**: Open for writing, truncating the file first
+	 * - **x**: Open for exclusive creation, failing if the file exists
+	 * - **a**: Open for writing, appending to the end if it exists
+	 * - **b**: Binary mode
+	 * - **t**: Text mode (default)
+	 * - **+**: Open for updating (reading and writing)
+	 *
+	 * The default mode is `'r'` (open for reading, synonym of `'rt'`). For binary read-write access, the mode `'w+b'` opens and truncates the file to 0 bytes. `'r+b'` opens the file in binary mode without truncation.
+	 *
+	 * Files can be created in one of two modes: “Binary Mode” or “Text Mode”. In Binary mode, reading from the file will read [TypedArray](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray) objects. In Text mode, the file object will attempt to interpret read data in a specific encoding (specified when the file was created) and return string objects. By default, the encoding of a file in text mode with no encoding specified is UTF-8.
+	 *
+	 * For files opened in Text mode, the optional encoding argument can be used to set what encoding will be used to interpret read and (by default) written data. If this argument is not specified, UTF-8 will be used.
+	 *
+	 * Supported encodings include:
+	 * - “utf8” / “utf-8”
+	 * - “ascii”
+	 * - “utf16le” / “utf-16le”
+	 * - “utf16be” / “utf-16be”
+	 * - “latin1”
+	 * - “hex”
+	 * - “base64”
 	 */
-	open(path: string, mode?: string, encoding?: Encoding): FileTextMode | FileBinaryMode
-	// TODO: Better mode selection or document
+	open(path: string, mode?: string, encoding?: Encoding): File
+	// TODO: Better mode selection by overloading modes. Needs all possible combination.
 
 	/**
 	 * Removes a file at a path. This method is only valid for regular files. If no file exists at the path, this method does nothing.
@@ -1879,17 +1915,16 @@ declare class NotificationRequest {
 
 /// https://docs.nova.app/api-reference/notification-response/
 
-/** A `NotificationResponse` object represents the result of a notification presented using a NotificationRequest being dismissed. */
+/** A `NotificationResponse` object represents the result of a notification presented using a [NotificationRequest](https://docs.nova.app/api-reference/notification-request) being dismissed. */
 interface NotificationResponse {
 	/** The identifier for the notification. */
 	readonly identifier: string
 
 	/** The index of the action that was chosen to dismiss the notification, in the same order as the `actions` property specified in the original notification request. If the notification was dismissed for another reason, such as the workspace closing, this value will may `null` or `undefined`. */
-	readonly actionIdx: number | null | undefined
+	readonly actionIdx?: number | null
 
 	/** The value entered by the user into the notification’s input field, for notifications of the appropriate type. */
-	readonly textInputValue: string
-	// TODO: Check the type of notification of non-input type
+	readonly textInputValue?: string
 }
 
 /// https://docs.nova.app/api-reference/path/
@@ -1986,7 +2021,7 @@ declare class Process {
 	})
 
 	/** The arguments passed to the process (as an Array), including any specified when the Process was constructed. */
-	readonly args: string[]
+	readonly args: ReadonlyArray<string>
 
 	/** The command used to launch the process. */
 	readonly command: string
@@ -2274,7 +2309,7 @@ declare class ScopeSelector {
 	constructor(string: string)
 
 	/** An array of strings representing the set of period-separated classes that were specified in the string which created the selector. The classes are not guaranteed to be in any particular order, and may not represent the order that was originally specified. */
-	readonly classes: string[]
+	readonly classes: ReadonlyArray<string>
 
 	/** The string which created the selector. */
 	readonly string: string
@@ -2502,7 +2537,7 @@ declare class TaskCommandAction {
 	 *
 	 * See documentation for the [CommandsRegistry](https://docs.nova.app/api-reference/commands-registry) for more information about how commands are invoked and how their arguments are handled.
 	 */
-	readonly args: string[]
+	readonly args: ReadonlyArray<string>
 
 	/** The name used to register the command. */
 	readonly command: string
@@ -2587,8 +2622,7 @@ declare class TaskDebugAdapterAction {
 	socketPath?: string
 
 	/** The port on which to attempt to connect to a Socket to communicate with the adapter. This property is only referenced when the `transport` is set to `socket`. This property is required if using Socket communication. */
-	socketPort?: string | number
-	// TODO: Check if both string and number are supported
+	socketPort?: number
 
 	/**
 	 * The transport mechanism to use to communicate with the adapter. Valid values are:
@@ -2636,7 +2670,7 @@ declare class TaskProcessAction {
 	})
 
 	/** The arguments passed to the process, including any specified when the Process was constructed. */
-	readonly args: string[]
+	readonly args: ReadonlyArray<string>
 
 	/** The command used to launch the process. */
 	readonly command: string
@@ -2648,7 +2682,7 @@ declare class TaskProcessAction {
 	readonly env: { [key: string]: string }
 
 	/** An array of [Issue Matcher](https://docs.nova.app/extensions/issue-matchers) names that will be used when processing output from the action. If not specified, the standard set of matchers will be used. */
-	readonly matchers: string[]
+	readonly matchers: ReadonlyArray<string>
 }
 
 /// https://docs.nova.app/api-reference/task-resolvable-action/
@@ -2724,7 +2758,6 @@ interface TextDocument {
 
 	/** Adds an event listener that invokes the provided `callback` when the document’s path changes. The callback will receive as an argument the document object and the new path (or `null` if the document does not have a path). */
 	onDidChangePath(callback: (document: TextDocument, path: string | null) => void): Disposable
-	// TODO: Check if returns a Disposable since undocumented
 
 	/** Adds an event listener that invokes the provided `callback` when the document’s syntax (language) changes. The callback will receive as an argument the document object and the new syntax name (or `null` if the document does not have a syntax / is plain text). */
 	onDidChangeSyntax(callback: (document: TextDocument, syntax: string | null) => void): Disposable
@@ -3177,7 +3210,7 @@ declare class TreeView<E> extends Disposable {
 	readonly visible: boolean
 
 	/** An array of elements that are currently selected within the tree view. */
-	readonly selection: E[]
+	readonly selection: ReadonlyArray<E>
 
 	/**
 	 * Adds an event listener that invokes the provided `callback` when the tree view’s selection change. The callback will receive as an argument the array of selected elements.
@@ -3215,18 +3248,19 @@ declare class TreeView<E> extends Disposable {
 	/** Attempts to reveal the element in the tree. */
 	reveal(element: E, options?: {
 		/** Whether the element should be selected (default is `true`). */
-		select: boolean = true
+		select?: boolean
 
 		/** Whether the scroll view of the tree should be scrolled to make the element visible (default is `false`). */
-		focus: boolean = false
+		focus?: boolean
 
 		/** The number of ancestors to attempt to expand to reveal the element (up to a maximum of 3). */
 		reveal?: number
 	}): void
-	// TODO: Check if default values work
 }
 
 /// https://docs.nova.app/api-reference/web-apis/
+
+// TODO: Finish WEB APIs
 
 declare function atob(data: string): string
 declare function btoa(data: string): string
@@ -3249,7 +3283,6 @@ declare function clearInterval(handle?: number): void
 interface Workspace {
 	/** The `TextEditor` instance that is currently focused in the workspace. This may be `null` if no text editor is focused. */
 	readonly activeTextEditor: TextEditor | null
-	// TODO: Check if null is actually the best way to handle this
 
 	/**
 	 * The [Configuration](https://docs.nova.app/api-reference/configuration) object for the workspace, written into the workspace’s internal metadata folder.
@@ -3262,7 +3295,7 @@ interface Workspace {
 	 * An array of [DebugSession](https://docs.nova.app/api-reference/debug-session) objects which are running for the workspace.
 	 * @since 9.0
 	 */
-	readonly debugSessions: DebugSession[]
+	readonly debugSessions: ReadonlyArray<DebugSession>
 
 	/** Returns the workspace’s path on disk, as a `String`. If the workspace is not bound to a folder this may be `null` or `undefined`. */
 	readonly path?: string | null
@@ -3280,10 +3313,10 @@ interface Workspace {
 	readonly previewURL?: string | null
 
 	/** An array of [TextDocument](https://docs.nova.app/api-reference/text-document) objects representing each document open in the workspace. Text Documents are not necessarily one-to-one with the `textEditors` properties, as multiple editors can be opened for a single text document. */
-	readonly textDocuments: TextDocument[]
+	readonly textDocuments: ReadonlyArray<TextDocument>
 
 	/** An array of [TextEditor](https://docs.nova.app/api-reference/text-editor) objects representing each text editor open in the workspace. Text Editors are not necessarily one-to-one with the `textDocuments` properties, as multiple editors can be opened for a single document. */
-	readonly textEditors: TextEditor[]
+	readonly textEditors: ReadonlyArray<TextEditor>
 
 	/** Returns `true` if the workspace contains the file at a specified path. If the workspace is not bound to a folder, this method always returns `false`. */
 	contains(path: string): boolean
