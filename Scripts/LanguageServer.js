@@ -95,15 +95,15 @@ class LanguageServer {
 				const didAddTextEditorHandler = nova.workspace.onDidAddTextEditor((editor) => {
 					if (!solargraph.SYNTAXES.includes(editor.document.syntax)) return
 
-					const didSaveHandler = editor.onDidSave(async (editor) => {
-						nova.commands.invoke("tommasonegri.solargraph._format", editor, { verbose: false })
+					const willSaveHandler = editor.onWillSave(async (editor) => {
+						await nova.commands.invoke("tommasonegri.solargraph._format", editor, { verbose: false })
 					})
 
 					const didDestroyHandler = editor.onDidDestroy(() => {
-						didSaveHandler.dispose()
+						willSaveHandler.dispose()
 					})
 
-					this.formatOnSaveEventHandlers.push(didSaveHandler)
+					this.formatOnSaveEventHandlers.push(willSaveHandler)
 					this.formatOnSaveEventHandlers.push(didDestroyHandler)
 				})
 
