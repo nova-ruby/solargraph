@@ -1,3 +1,9 @@
+## Version 1.4
+
+Fix:
+
+- Use willSave instead of didSave as the formatting on save handler. The previous one caused the document to be always in a not saved state.
+
 ## Version 1.3
 
 Improved:
